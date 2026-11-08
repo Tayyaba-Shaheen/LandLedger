@@ -1,0 +1,2463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LandLedger — DHA Phase 1 Registry</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --ink:#0D1117;--ink2:#1C2333;--ink3:#2D3748;
+  --blue:#2563EB;--blue-l:#EFF6FF;--blue-m:#BFDBFE;
+  --green:#059669;--green-l:#ECFDF5;--green-m:#A7F3D0;
+  --amber:#D97706;--amber-l:#FFFBEB;--amber-m:#FDE68A;
+  --red:#DC2626;--red-l:#FEF2F2;--red-m:#FECACA;
+  --slate:#64748B;--slate2:#94A3B8;--slate3:#CBD5E1;--slate4:#E2E8F0;
+  --surface:#F8FAFC;--white:#FFFFFF;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.05);
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 4px 12px rgba(0,0,0,.05);
+  --shadow-lg:0 8px 32px rgba(0,0,0,.12);
+  --r:10px;--r2:6px;--r3:16px;
+  --font:'Plus Jakarta Sans',sans-serif;
+  --mono:'JetBrains Mono',monospace;
+}
+body{font-family:var(--font);background:var(--surface);color:var(--ink);min-height:100vh}
+
+/* ─── TOP NAV ─── */
+.topnav{background:var(--white);border-bottom:1px solid var(--slate4);padding:0 32px;height:58px;display:flex;align-items:center;gap:20px;position:sticky;top:0;z-index:100}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none}
+.brand-icon{width:34px;height:34px;background:var(--ink);border-radius:8px;display:flex;align-items:center;justify-content:center}
+.brand-icon svg{width:18px;height:18px;fill:none;stroke:#fff;stroke-width:2}
+.brand-name{font-size:15px;font-weight:800;color:var(--ink);letter-spacing:-.4px}
+.brand-sub{font-size:10px;color:var(--slate);font-family:var(--mono);letter-spacing:.5px;margin-top:-1px}
+.nav-links{display:flex;gap:2px;margin-left:24px}
+.nav-link{padding:6px 14px;border-radius:6px;font-size:13px;font-weight:500;color:var(--slate);cursor:pointer;transition:.15s;border:none;background:none;font-family:var(--font)}
+.nav-link:hover{color:var(--ink);background:var(--surface)}
+.nav-link.active{color:var(--blue);background:var(--blue-l);font-weight:600}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+
+/* WALLET BTN */
+.wallet-btn{display:flex;align-items:center;gap:8px;padding:7px 14px;border-radius:8px;border:1.5px solid var(--slate4);background:var(--white);cursor:pointer;transition:.2s;font-family:var(--font)}
+.wallet-btn:hover{border-color:var(--blue);background:var(--blue-l)}
+.wallet-btn.connected{border-color:var(--green-m);background:var(--green-l)}
+.wallet-dot{width:7px;height:7px;border-radius:50%;background:var(--slate3);flex-shrink:0}
+.wallet-dot.on{background:var(--green);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+.wallet-addr{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--ink)}
+.wallet-net{font-size:10px;color:var(--green);font-weight:600}
+
+.admin-btn{padding:7px 14px;border-radius:8px;border:1.5px solid var(--slate4);background:var(--white);font-size:12px;font-weight:600;color:var(--slate);cursor:pointer;font-family:var(--font);transition:.2s}
+.admin-btn:hover{border-color:var(--amber);color:var(--amber)}
+
+/* ─── LAYOUT ─── */
+.layout{display:flex;min-height:calc(100vh - 58px)}
+.sidebar{width:220px;background:var(--white);border-right:1px solid var(--slate4);padding:20px 12px;flex-shrink:0;position:sticky;top:58px;height:calc(100vh - 58px);overflow-y:auto}
+.main{flex:1;padding:28px 32px;overflow-x:hidden}
+
+.s-section{margin-bottom:6px}
+.s-label{font-size:10px;font-weight:700;color:var(--slate2);text-transform:uppercase;letter-spacing:.8px;padding:8px 10px 4px}
+.s-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:7px;font-size:13px;font-weight:500;color:var(--slate);cursor:pointer;transition:.15s}
+.s-item:hover{background:var(--surface);color:var(--ink)}
+.s-item.active{background:var(--blue-l);color:var(--blue);font-weight:600}
+.s-item svg{width:16px;height:16px;flex-shrink:0;stroke:currentColor;stroke-width:2;fill:none}
+.s-badge{margin-left:auto;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;background:var(--red);color:#fff}
+.s-badge.amber{background:var(--amber);color:#fff}
+
+/* ─── PAGE SECTIONS ─── */
+.page{display:none}
+.page.active{display:block}
+.page-title{font-size:22px;font-weight:800;color:var(--ink);letter-spacing:-.5px;margin-bottom:4px}
+.page-sub{font-size:13px;color:var(--slate);margin-bottom:24px}
+
+/* ─── CARDS ─── */
+.card{background:var(--white);border:1px solid var(--slate4);border-radius:var(--r3);overflow:hidden}
+.card-header{padding:16px 20px;border-bottom:1px solid var(--slate4);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:14px;font-weight:700;color:var(--ink)}
+.card-body{padding:20px}
+
+/* ─── STAT ROW ─── */
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.stat{background:var(--white);border:1px solid var(--slate4);border-radius:var(--r);padding:16px 18px}
+.stat-val{font-size:22px;font-weight:800;color:var(--ink);margin-bottom:2px}
+.stat-label{font-size:11px;color:var(--slate);font-weight:500}
+.stat-sub{font-size:11px;font-weight:600;margin-top:4px}
+.up{color:var(--green)}.down{color:var(--red)}.neutral{color:var(--slate)}
+
+/* ─── PROPERTY GRID ─── */
+.prop-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.prop-card{background:var(--white);border:1px solid var(--slate4);border-radius:var(--r3);overflow:hidden;cursor:pointer;transition:.2s}
+.prop-card:hover{box-shadow:var(--shadow-lg);transform:translateY(-2px);border-color:var(--blue-m)}
+.prop-thumb{height:140px;display:flex;align-items:center;justify-content:center;font-size:52px;position:relative}
+.prop-badges{position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px}
+.badge-sale{background:var(--blue);color:#fff}
+.badge-sold{background:var(--ink2);color:#fff}
+.badge-owned{background:var(--green);color:#fff}
+.badge-partial{background:var(--amber);color:#fff}
+.badge-verified{background:rgba(5,150,105,.9);color:#fff}
+.badge-pending{background:rgba(217,119,6,.9);color:#fff}
+.prop-body{padding:14px 16px}
+.prop-name{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:2px}
+.prop-loc{font-size:11px;color:var(--slate);margin-bottom:8px}
+.prop-price{font-size:16px;font-weight:800;color:var(--blue);margin-bottom:6px}
+.prop-meta{display:flex;gap:10px;flex-wrap:wrap}
+.prop-meta-item{font-size:11px;color:var(--slate);background:var(--surface);padding:3px 7px;border-radius:4px}
+.prop-footer{padding:10px 16px;border-top:1px solid var(--slate4);display:flex;align-items:center;justify-content:space-between}
+.parcel-id{font-family:var(--mono);font-size:10px;color:var(--slate)}
+.chain-ok{font-size:10px;font-weight:600;color:var(--green)}
+
+/* ─── GIS MAP ─── */
+.gis-wrap{position:relative;background:#EAF4F4;border-radius:var(--r);overflow:hidden;height:420px}
+.gis-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(100,116,139,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(100,116,139,.12) 1px,transparent 1px);background-size:32px 32px}
+.gis-road-h{position:absolute;background:rgba(255,255,255,.7);height:10px;left:0;right:0}
+.gis-road-v{position:absolute;background:rgba(255,255,255,.7);width:10px;top:0;bottom:0}
+.gis-label{position:absolute;font-size:9px;font-weight:700;color:var(--slate);letter-spacing:.5px;text-transform:uppercase}
+.plot{position:absolute;border:2px solid;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:.2s;font-size:9px;font-weight:700;text-align:center;line-height:1.3}
+.plot:hover{z-index:10;transform:scale(1.06)}
+.plot.available{background:rgba(37,99,235,.12);border-color:#2563EB;color:#1E40AF}
+.plot.sold{background:rgba(29,41,57,.08);border-color:#475569;color:#475569}
+.plot.for-sale{background:rgba(5,150,105,.15);border-color:#059669;color:#065F46}
+.plot.partial{background:rgba(217,119,6,.15);border-color:#D97706;color:#92400E}
+.plot.mine{background:rgba(37,99,235,.25);border-color:#1D4ED8;color:#1E3A8A;border-width:3px}
+.gis-legend{position:absolute;bottom:12px;left:12px;background:rgba(255,255,255,.95);border:1px solid var(--slate4);border-radius:8px;padding:10px 14px}
+.legend-row{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--ink);margin-bottom:4px}
+.legend-row:last-child{margin-bottom:0}
+.legend-swatch{width:14px;height:14px;border-radius:3px;border:2px solid}
+.gis-info{position:absolute;top:12px;right:12px;background:rgba(255,255,255,.95);border:1px solid var(--slate4);border-radius:8px;padding:12px 14px;width:180px;font-size:12px}
+.gis-info.hidden{display:none}
+
+/* ─── TIMELINE ─── */
+.tl{padding-left:22px;position:relative}
+.tl::before{content:'';position:absolute;left:6px;top:6px;bottom:6px;width:2px;background:var(--slate4)}
+.tl-item{position:relative;padding-bottom:18px}
+.tl-item:last-child{padding-bottom:0}
+.tl-dot{position:absolute;left:-18px;top:4px;width:12px;height:12px;border-radius:50%;border:2px solid var(--white)}
+.tl-dot.blue{background:var(--blue);box-shadow:0 0 0 2px var(--blue-m)}
+.tl-dot.green{background:var(--green);box-shadow:0 0 0 2px var(--green-m)}
+.tl-dot.amber{background:var(--amber);box-shadow:0 0 0 2px var(--amber-m)}
+.tl-dot.gray{background:var(--slate2);box-shadow:0 0 0 2px var(--slate4)}
+.tl-head{font-size:13px;font-weight:600;color:var(--ink)}
+.tl-sub{font-size:11px;color:var(--slate);margin-top:2px}
+.tl-hash{font-family:var(--mono);font-size:10px;color:var(--blue);margin-top:3px;word-break:break-all}
+.tl-price{font-size:12px;font-weight:700;color:var(--green);margin-top:2px}
+
+/* ─── BUTTONS ─── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:var(--font);transition:.15s}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:#1D4ED8}
+.btn-green{background:var(--green);color:#fff}
+.btn-green:hover{background:#047857}
+.btn-outline{background:var(--white);color:var(--ink);border:1.5px solid var(--slate4)}
+.btn-outline:hover{border-color:var(--slate3);background:var(--surface)}
+.btn-amber{background:var(--amber);color:#fff}
+.btn-red{background:var(--red);color:#fff}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* ─── FORM ─── */
+.form-group{margin-bottom:14px}
+.form-label{font-size:12px;font-weight:600;color:var(--ink);display:block;margin-bottom:5px}
+.form-input{width:100%;padding:9px 12px;border:1.5px solid var(--slate4);border-radius:8px;font-family:var(--font);font-size:13px;color:var(--ink);background:var(--white);outline:none;transition:.15s}
+.form-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.08)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-hint{font-size:11px;color:var(--slate);margin-top:4px}
+
+/* ─── MODAL ─── */
+.modal-bg{position:fixed;inset:0;background:rgba(13,17,23,.4);z-index:200;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-bg.open{display:flex}
+.modal{background:var(--white);border-radius:var(--r3);padding:28px;width:460px;box-shadow:var(--shadow-lg);max-height:90vh;overflow-y:auto}
+.modal-title{font-size:18px;font-weight:800;color:var(--ink);margin-bottom:6px}
+.modal-sub{font-size:13px;color:var(--slate);margin-bottom:22px}
+.modal-close{float:right;cursor:pointer;color:var(--slate);font-size:18px;line-height:1;background:none;border:none;font-size:20px}
+
+/* ─── TABLE ─── */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{font-size:11px;font-weight:700;color:var(--slate);text-transform:uppercase;letter-spacing:.4px;padding:10px 14px;text-align:left;background:var(--surface);border-bottom:1px solid var(--slate4)}
+td{font-size:13px;color:var(--ink);padding:11px 14px;border-bottom:1px solid var(--slate4);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#FAFBFC}
+
+/* ─── ALERTS ─── */
+.alert{padding:12px 16px;border-radius:8px;font-size:13px;display:flex;align-items:flex-start;gap:10px;margin-bottom:16px;line-height:1.5}
+.alert-info{background:var(--blue-l);border:1px solid var(--blue-m);color:#1E40AF}
+.alert-success{background:var(--green-l);border:1px solid var(--green-m);color:#065F46}
+.alert-warn{background:var(--amber-l);border:1px solid var(--amber-m);color:#78350F}
+.alert-err{background:var(--red-l);border:1px solid var(--red-m);color:#991B1B}
+
+/* ─── MISC ─── */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.grid-1-2{display:grid;grid-template-columns:2fr 3fr;gap:20px}
+.mt-4{margin-top:16px}.mt-6{margin-top:24px}
+.divider{height:1px;background:var(--slate4);margin:20px 0}
+.tag{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px}
+.tag-blue{background:var(--blue-l);color:var(--blue)}
+.tag-green{background:var(--green-l);color:var(--green)}
+.tag-amber{background:var(--amber-l);color:var(--amber)}
+.tag-red{background:var(--red-l);color:var(--red)}
+.tag-gray{background:var(--surface);color:var(--slate)}
+.hash{font-family:var(--mono);font-size:11px;color:var(--blue)}
+.price-big{font-size:26px;font-weight:800;color:var(--ink);letter-spacing:-.5px}
+
+/* ─── ADMIN LOGIN ─── */
+.admin-login{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--surface)}
+.admin-login-card{background:var(--white);border:1px solid var(--slate4);border-radius:var(--r3);padding:36px;width:380px;box-shadow:var(--shadow-lg)}
+.admin-login-title{font-size:22px;font-weight:800;color:var(--ink);margin-bottom:4px}
+.admin-login-sub{font-size:13px;color:var(--slate);margin-bottom:28px}
+
+/* ─── TOAST ─── */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--ink);color:#fff;padding:12px 18px;border-radius:10px;font-size:13px;font-weight:500;z-index:9999;opacity:0;transform:translateY(10px);transition:.3s;pointer-events:none;max-width:320px}
+.toast.show{opacity:1;transform:translateY(0)}
+
+/* ─── SELL SPLIT ─── */
+.split-viz{display:flex;height:32px;border-radius:6px;overflow:hidden;border:1px solid var(--slate4);margin:10px 0}
+.split-kept{background:var(--blue-l);border-right:2px dashed var(--blue-m);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--blue);transition:all .3s}
+.split-sell{background:var(--green-l);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--green);transition:all .3s}
+
+/* ─── ADMIN AREA ─── */
+.admin-area{display:none}
+.admin-area.show{display:block}
+#main-app{display:block}
+#main-app.hide{display:none}
+
+/* bar chart */
+.bar-wrap{margin-bottom:12px}
+.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:7px}
+.bar-lbl{font-size:12px;color:var(--ink);width:80px;flex-shrink:0;font-weight:500}
+.bar-track{flex:1;height:8px;background:var(--slate4);border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;transition:width .6s ease}
+.bar-val{font-size:11px;font-weight:700;color:var(--ink);width:50px;text-align:right}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════ -->
+<!--                TOAST                       -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="toast" id="toast"></div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!--           ADMIN LOGIN OVERLAY              -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="admin-login-screen" style="display:none;position:fixed;inset:0;z-index:300;background:var(--surface)">
+  <div class="admin-login">
+    <div class="admin-login-card">
+      <div style="width:40px;height:40px;background:var(--ink);border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:16px">
+        <svg width="20" height="20" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+      <div class="admin-login-title">Admin Portal</div>
+      <div class="admin-login-sub">LandLedger · DHA Phase 1 Registry</div>
+      <div class="form-group"><label class="form-label">Username</label><input class="form-input" id="adm-user" placeholder="admin" value="admin"></div>
+      <div class="form-group"><label class="form-label">Password</label><input class="form-input" id="adm-pass" type="password" placeholder="••••••••" value="admin123"></div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:4px" onclick="adminLogin()">Sign In to Admin Panel</button>
+      <div style="margin-top:12px;text-align:center"><button class="btn btn-outline btn-sm" onclick="hideAdminLogin()">← Back to App</button></div>
+      <div style="margin-top:16px;padding:10px 12px;background:var(--surface);border-radius:8px;font-size:11px;color:var(--slate)">Demo credentials: <span style="font-family:var(--mono)">admin / admin123</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!--              MAIN APP                      -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="main-app">
+
+<!-- TOP NAV -->
+<nav class="topnav">
+  <a class="brand" href="#" onclick="return false">
+    <div class="brand-icon">
+      <svg viewBox="0 0 24 24"><rect x="3" y="10" width="18" height="11" rx="2"/><path d="M7 10V7a5 5 0 0 1 10 0v3"/><circle cx="12" cy="15" r="1.5" fill="#fff" stroke="none"/></svg>
+    </div>
+    <div>
+      <div class="brand-name">LandLedger</div>
+      <div class="brand-sub">DHA Phase 1 · Sepolia</div>
+    </div>
+  </a>
+
+  <div class="nav-links">
+    <button class="nav-link active" onclick="showPage('explore',this)">Explore</button>
+    <button class="nav-link" onclick="showPage('my-land',this)">My Land</button>
+    <button class="nav-link" onclick="showPage('gis',this)">GIS Map</button>
+    <button class="nav-link" onclick="showPage('history',this)">History</button>
+    <button class="nav-link" onclick="showPage('market',this)">Marketplace</button>
+  </div>
+
+  <div class="nav-right">
+    <button class="admin-btn" onclick="showAdminLogin()">⚙ Admin</button>
+    <div class="wallet-btn" id="wallet-btn" onclick="connectWallet()">
+      <div class="wallet-dot" id="wallet-dot"></div>
+      <div>
+        <div class="wallet-addr" id="wallet-addr">Connect Wallet</div>
+        <div class="wallet-net" id="wallet-net" style="display:none">Sepolia Testnet</div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div class="layout">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="s-section">
+    <div class="s-label">Browse</div>
+    <div class="s-item active" onclick="showPage('explore',this)">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      All Properties
+    </div>
+    <div class="s-item" onclick="showPage('market',this)">
+      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Marketplace
+      <span class="s-badge amber" id="sb-forsale">0</span>
+    </div>
+    <div class="s-item" onclick="showPage('gis',this)">
+      <svg viewBox="0 0 24 24"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
+      GIS Map
+    </div>
+  </div>
+  <div class="s-section">
+    <div class="s-label">My Account</div>
+    <div class="s-item" onclick="showPage('my-land',this)">
+      <svg viewBox="0 0 24 24"><path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+      My Land
+    </div>
+    <div class="s-item" onclick="showPage('history',this)">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Ownership History
+    </div>
+    <div class="s-item" onclick="showPage('transactions',this)">
+      <svg viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+      Transactions
+    </div>
+  </div>
+  <div class="s-section">
+    <div class="s-label">Society</div>
+    <div class="s-item" onclick="showPage('about',this)">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      About DHA Ph.1
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN CONTENT -->
+<main class="main">
+
+<!-- ═══════════ EXPLORE ═══════════ -->
+<div class="page active" id="page-explore">
+  <div class="page-title">DHA Phase 1 — All Properties</div>
+  <div class="page-sub">Rawalpindi · 42 registered plots on Sepolia blockchain</div>
+
+  <div class="stat-row">
+    <div class="stat">
+      <div class="stat-val">42</div>
+      <div class="stat-label">Total Plots Registered</div>
+      <div class="stat-sub neutral">DHA Phase 1</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" id="st-forsale">0</div>
+      <div class="stat-label">Currently For Sale</div>
+      <div class="stat-sub up">↑ Active listings</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val">₨ 42.8Cr</div>
+      <div class="stat-label">Total Registered Value</div>
+      <div class="stat-sub up">↑ 11% this year</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val">98%</div>
+      <div class="stat-label">Chain Verified</div>
+      <div class="stat-sub neutral">41/42 plots</div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">
+    <input class="form-input" style="max-width:220px" id="search-box" placeholder="Search plot ID, block…" oninput="filterProps()">
+    <select class="form-input" style="width:140px" id="filter-type" onchange="filterProps()">
+      <option value="">All Sizes</option>
+      <option value="5 Marla">5 Marla</option>
+      <option value="10 Marla">10 Marla</option>
+      <option value="1 Kanal">1 Kanal</option>
+      <option value="2 Kanal">2 Kanal</option>
+    </select>
+    <select class="form-input" style="width:140px" id="filter-status" onchange="filterProps()">
+      <option value="">All Status</option>
+      <option value="for-sale">For Sale</option>
+      <option value="available">Not Listed</option>
+      <option value="sold">Sold</option>
+    </select>
+    <button class="btn btn-outline btn-sm" onclick="resetFilters()">Reset</button>
+  </div>
+
+  <div class="prop-grid" id="prop-grid"></div>
+</div>
+
+<!-- ═══════════ MY LAND ═══════════ -->
+<div class="page" id="page-my-land">
+  <div class="page-title">My Land</div>
+  <div class="page-sub" id="my-land-sub">Connect your MetaMask wallet to view your properties</div>
+
+  <div id="my-land-no-wallet" class="alert alert-info">
+    🦊 Please connect your MetaMask wallet (top right) to see properties linked to your address.
+  </div>
+
+  <div id="my-land-content" style="display:none">
+    <div class="alert alert-success" id="my-land-alert">✓ Showing properties registered to your wallet address.</div>
+    <div class="prop-grid" id="my-prop-grid"></div>
+    <div id="my-land-empty" style="display:none;text-align:center;padding:48px;color:var(--slate)">
+      <div style="font-size:40px;margin-bottom:12px">🏗</div>
+      <div style="font-size:15px;font-weight:600">No properties found for your wallet</div>
+      <div style="font-size:13px;margin-top:4px">Properties in this demo are mapped to specific test wallet addresses.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ GIS MAP ═══════════ -->
+<div class="page" id="page-gis">
+  <div class="page-title">GIS Parcel Map</div>
+  <div class="page-sub">DHA Phase 1, Rawalpindi — Interactive plot boundaries. Click any plot for details.</div>
+
+  <div class="card">
+    <div class="card-body" style="padding:12px">
+      <div class="gis-wrap" id="gis-map">
+        <div class="gis-grid"></div>
+        <!-- Roads -->
+        <div class="gis-road-h" style="top:155px"></div>
+        <div class="gis-road-h" style="top:280px"></div>
+        <div class="gis-road-v" style="left:175px"></div>
+        <div class="gis-road-v" style="left:370px"></div>
+        <!-- Road Labels -->
+        <div class="gis-label" style="top:140px;left:8px;color:rgba(100,116,139,.7)">Main Boulevard</div>
+        <div class="gis-label" style="top:265px;left:8px;color:rgba(100,116,139,.7)">Street 12</div>
+        <div class="gis-label" style="top:8px;left:178px;color:rgba(100,116,139,.7)">Avenue A</div>
+        <div class="gis-label" style="top:8px;left:373px;color:rgba(100,116,139,.7)">Avenue B</div>
+        <!-- Block Labels -->
+        <div class="gis-label" style="top:26px;left:40px;font-size:11px;color:var(--blue);font-weight:800">BLOCK A</div>
+        <div class="gis-label" style="top:26px;left:220px;font-size:11px;color:var(--blue);font-weight:800">BLOCK B</div>
+        <div class="gis-label" style="top:26px;left:420px;font-size:11px;color:var(--blue);font-weight:800">BLOCK C</div>
+        <div class="gis-label" style="top:178px;left:40px;font-size:11px;color:var(--blue);font-weight:800">BLOCK D</div>
+        <div class="gis-label" style="top:178px;left:220px;font-size:11px;color:var(--blue);font-weight:800">BLOCK E</div>
+        <div class="gis-label" style="top:178px;left:420px;font-size:11px;color:var(--blue);font-weight:800">BLOCK F</div>
+        <!-- GIS Plots rendered by JS -->
+        <div id="gis-plots"></div>
+        <!-- Legend -->
+        <div class="gis-legend">
+          <div class="legend-row"><div class="legend-swatch" style="background:rgba(37,99,235,.12);border-color:#2563EB"></div>Registered / Available</div>
+          <div class="legend-row"><div class="legend-swatch" style="background:rgba(5,150,105,.15);border-color:#059669"></div>For Sale</div>
+          <div class="legend-row"><div class="legend-swatch" style="background:rgba(217,119,6,.15);border-color:#D97706"></div>Partial Sale</div>
+          <div class="legend-row"><div class="legend-swatch" style="background:rgba(29,41,57,.08);border-color:#475569"></div>Sold / Transferred</div>
+          <div class="legend-row"><div class="legend-swatch" style="background:rgba(37,99,235,.25);border-color:#1D4ED8;border-width:2px"></div>Your Plot</div>
+        </div>
+        <!-- Info Panel -->
+        <div class="gis-info hidden" id="gis-info">
+          <div style="font-weight:700;font-size:13px;margin-bottom:6px" id="gi-title">—</div>
+          <div style="font-size:11px;color:var(--slate);margin-bottom:6px" id="gi-owner">—</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px" id="gi-tags"></div>
+          <div style="font-size:12px;font-weight:700;color:var(--blue)" id="gi-price">—</div>
+          <button class="btn btn-primary btn-sm" style="width:100%;justify-content:center;margin-top:8px" onclick="openFromGIS()">View Details</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ HISTORY ═══════════ -->
+<div class="page" id="page-history">
+  <div class="page-title">Ownership History</div>
+  <div class="page-sub">Complete blockchain-verified transfer records for all DHA Phase 1 plots</div>
+
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-body">
+      <div style="display:flex;gap:10px;align-items:center">
+        <input class="form-input" style="flex:1" id="hist-search" placeholder="Enter Plot ID (e.g. A-102) or owner name…">
+        <button class="btn btn-primary" onclick="searchHistory()">Search</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="hist-result"></div>
+  <div id="hist-all">
+    <div class="card">
+      <div class="card-header"><div class="card-title">All Transfer Records — DHA Phase 1</div></div>
+      <div class="card-body" style="padding:0">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Plot ID</th><th>From</th><th>To</th><th>Area</th><th>Sale Price</th><th>Date</th><th>Tx Hash</th><th>Type</th></tr></thead>
+            <tbody id="hist-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ MARKETPLACE ═══════════ -->
+<div class="page" id="page-market">
+  <div class="page-title">Marketplace</div>
+  <div class="page-sub">Active property listings — buy directly via Sepolia ETH transaction</div>
+  <div class="alert alert-info">🔗 All purchases are processed through MetaMask on the Sepolia testnet. Funds are held in escrow until ownership transfer is confirmed.</div>
+  <div class="prop-grid" id="market-grid"></div>
+</div>
+
+<!-- ═══════════ TRANSACTIONS ═══════════ -->
+<div class="page" id="page-transactions">
+  <div class="page-title">Transaction Log</div>
+  <div class="page-sub">All on-chain property transactions on Sepolia testnet</div>
+  <div class="card">
+    <div class="card-body" style="padding:0">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Tx Hash</th><th>Plot</th><th>Action</th><th>Amount (ETH)</th><th>Amount (PKR)</th><th>From</th><th>To</th><th>Date</th><th>Status</th></tr></thead>
+          <tbody id="tx-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ ABOUT ═══════════ -->
+<div class="page" id="page-about">
+  <div class="page-title">DHA Phase 1, Rawalpindi</div>
+  <div class="page-sub">Society overview and registry information</div>
+  <div class="grid-2" style="margin-bottom:20px">
+    <div class="card">
+      <div class="card-header"><div class="card-title">Society Info</div></div>
+      <div class="card-body">
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--slate)">Society Name</span><span style="font-weight:600">DHA Phase 1</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--slate)">Location</span><span style="font-weight:600">Rawalpindi, Punjab</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--slate)">Total Area</span><span style="font-weight:600">~2,400 Kanals</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--slate)">Total Plots</span><span style="font-weight:600">42 Registered</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--slate)">Blocks</span><span style="font-weight:600">A, B, C, D, E, F</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--slate)">Blockchain</span><span style="font-weight:600">Ethereum Sepolia</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--slate)">Registry Start</span><span style="font-weight:600">Jan 2023</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--slate)">Authority</span><span style="font-weight:600">DHA Rawalpindi</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Plot Distribution</div></div>
+      <div class="card-body">
+        <div class="bar-wrap">
+          <div class="bar-row"><div class="bar-lbl">5 Marla</div><div class="bar-track"><div class="bar-fill" style="width:35%;background:var(--blue)"></div></div><div class="bar-val">15 plots</div></div>
+          <div class="bar-row"><div class="bar-lbl">10 Marla</div><div class="bar-track"><div class="bar-fill" style="width:45%;background:var(--green)"></div></div><div class="bar-val">18 plots</div></div>
+          <div class="bar-row"><div class="bar-lbl">1 Kanal</div><div class="bar-track"><div class="bar-fill" style="width:17%;background:var(--amber)"></div></div><div class="bar-val">7 plots</div></div>
+          <div class="bar-row"><div class="bar-lbl">2 Kanal</div><div class="bar-track"><div class="bar-fill" style="width:5%;background:var(--red)"></div></div><div class="bar-val">2 plots</div></div>
+        </div>
+        <div class="divider"></div>
+        <div class="bar-wrap">
+          <div class="bar-row"><div class="bar-lbl">For Sale</div><div class="bar-track"><div class="bar-fill" style="width:0%" id="ab-sale" data-pct="21"></div></div><div class="bar-val" id="ab-sale-v">9</div></div>
+          <div class="bar-row"><div class="bar-lbl">Held</div><div class="bar-track"><div class="bar-fill" style="width:0%" id="ab-held" data-pct="74" style="background:var(--slate2)"></div></div><div class="bar-val" id="ab-held-v">31</div></div>
+          <div class="bar-row"><div class="bar-lbl">Partial</div><div class="bar-track"><div class="bar-fill" style="width:0%" id="ab-part" data-pct="5"></div></div><div class="bar-val" id="ab-part-v">2</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+</div><!-- end layout -->
+</div><!-- end main-app -->
+
+<!-- ═══════════════════════════════════════════ -->
+<!--              ADMIN DASHBOARD               -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="admin-area" id="admin-dashboard">
+  <nav class="topnav">
+    <div class="brand">
+      <div class="brand-icon" style="background:#7C3AED">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+      <div>
+        <div class="brand-name">LandLedger Admin</div>
+        <div class="brand-sub">DHA Phase 1 · Control Panel</div>
+      </div>
+    </div>
+    <div style="margin-left:auto;display:flex;gap:10px;align-items:center">
+      <span style="font-size:12px;color:var(--slate)">Logged in as <strong>admin</strong></span>
+      <button class="btn btn-outline btn-sm" onclick="adminLogout()">← Exit Admin</button>
+    </div>
+  </nav>
+  <div style="padding:28px 36px">
+    <div class="page-title">Admin Dashboard</div>
+    <div class="page-sub">Transaction monitoring · Plot registry · Society overview</div>
+
+    <div class="stat-row" style="grid-template-columns:repeat(4,1fr)">
+      <div class="stat"><div class="stat-val">42</div><div class="stat-label">Total Plots</div></div>
+      <div class="stat"><div class="stat-val" id="adm-forsale">0</div><div class="stat-label">For Sale</div><div class="stat-sub up">Active listings</div></div>
+      <div class="stat"><div class="stat-val" id="adm-txcount">0</div><div class="stat-label">Transactions</div><div class="stat-sub neutral">All time</div></div>
+      <div class="stat"><div class="stat-val">₨ 42.8Cr</div><div class="stat-label">Registry Value</div></div>
+    </div>
+
+    <div class="grid-2" style="margin-bottom:24px">
+      <div class="card">
+        <div class="card-header"><div class="card-title">All Plots — Registry</div></div>
+        <div class="card-body" style="padding:0">
+          <div class="table-wrap" style="max-height:380px;overflow-y:auto">
+            <table>
+              <thead><tr><th>Plot ID</th><th>Block</th><th>Size</th><th>Owner (Short)</th><th>Price (PKR)</th><th>Status</th></tr></thead>
+              <tbody id="adm-plots-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Recent Transactions</div></div>
+        <div class="card-body" style="padding:0">
+          <div class="table-wrap" style="max-height:380px;overflow-y:auto">
+            <table>
+              <thead><tr><th>Tx Hash</th><th>Plot</th><th>Action</th><th>ETH</th><th>Date</th></tr></thead>
+              <tbody id="adm-tx-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><div class="card-title">Listing Activity Monitor</div></div>
+      <div class="card-body">
+        <div class="alert alert-info">All listing and sale events are automatically logged when users interact via MetaMask. In production, these would be emitted from the smart contract.</div>
+        <div id="adm-activity" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!--           PROPERTY DETAIL MODAL            -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="modal-bg" id="prop-modal">
+  <div class="modal" id="prop-modal-body">
+    <!-- filled by JS -->
+  </div>
+</div>
+
+<!-- SELL MODAL -->
+<div class="modal-bg" id="sell-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('sell-modal')">×</button>
+    <div class="modal-title">List Property for Sale</div>
+    <div class="modal-sub" id="sell-modal-sub">Set your asking price and partial sale option</div>
+
+    <div id="sell-form">
+      <div class="form-group">
+        <label class="form-label">Plot ID</label>
+        <input class="form-input" id="sell-plotid" disabled>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Total Area</label>
+        <input class="form-input" id="sell-area" disabled>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Sell Portion</label>
+        <select class="form-input" id="sell-portion" onchange="updateSellSplit()">
+          <option value="100">Full Plot (100%)</option>
+          <option value="75">75%</option>
+          <option value="50">Half (50%)</option>
+          <option value="25">25%</option>
+        </select>
+        <div class="form-hint">You can sell a portion and retain the rest (e.g. 5 Marla from a 10 Marla plot)</div>
+      </div>
+      <div class="split-viz" id="split-viz">
+        <div class="split-kept" id="split-kept" style="width:0%">Kept</div>
+        <div class="split-sell" id="split-sell" style="width:100%">Selling</div>
+      </div>
+      <div id="split-label" style="font-size:11px;color:var(--slate);margin-bottom:12px;text-align:center"></div>
+      <div class="form-group">
+        <label class="form-label">Asking Price (ETH on Sepolia)</label>
+        <input class="form-input" id="sell-price-eth" type="number" step="0.001" placeholder="e.g. 0.5" oninput="calcPKR()">
+        <div class="form-hint" id="sell-pkr-hint">≈ — PKR</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Seller Notes</label>
+        <input class="form-input" id="sell-notes" placeholder="Optional: mention any features, access road, etc.">
+      </div>
+      <div class="alert alert-warn">⚠ This will call <span style="font-family:var(--mono)">listProperty()</span> on the Sepolia smart contract via MetaMask. Make sure you have Sepolia ETH for gas.</div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-outline" style="flex:1;justify-content:center" onclick="closeModal('sell-modal')">Cancel</button>
+        <button class="btn btn-green" style="flex:1;justify-content:center" onclick="confirmSell()">🦊 List via MetaMask</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BUY MODAL -->
+<div class="modal-bg" id="buy-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('buy-modal')">×</button>
+    <div class="modal-title">Purchase Property</div>
+    <div class="modal-sub" id="buy-modal-sub">Confirm your purchase on Sepolia testnet</div>
+    <div id="buy-details"></div>
+    <div class="alert alert-warn" style="margin-top:12px">⚠ This sends a real Sepolia ETH transaction via MetaMask. Funds are simulated as escrow in this demo.</div>
+    <div style="display:flex;gap:10px;margin-top:4px">
+      <button class="btn btn-outline" style="flex:1;justify-content:center" onclick="closeModal('buy-modal')">Cancel</button>
+      <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="confirmBuy()">🦊 Buy via MetaMask</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.9.0/dist/ethers.umd.min.js"></script>
+<script>
+// ═══════════════════════════════════════
+//           DATA LAYER
+// ═══════════════════════════════════════
+
+// ── PASTE YOUR VALUES HERE AFTER REMIX DEPLOY ──
+const CONTRACT_ADDRESS = "0x75323457B1999873Bee8578617CE1aD3F5dC0C6f";  // from Remix bottom-left
+
+const CONTRACT_ABI = [
+	{
+		"inputs": [],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"inputs": [],
+		"name": "AlreadyExists",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "AlreadyRegistered",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "BadAddress",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "BadPayment",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "BadPct",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "BadPrice",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "Collision",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "FeeTooHigh",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "NoPlot",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "NotAdmin",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "NotAvailable",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "NotForSale",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "NotOwner",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "SelfBuy",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "TooSmall",
+		"type": "error"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "oldAdmin",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "newAdmin",
+				"type": "address"
+			}
+		],
+		"name": "AdminTransferred",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "string",
+				"name": "plotId",
+				"type": "string"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "seller",
+				"type": "address"
+			}
+		],
+		"name": "PlotDelisted",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "string",
+				"name": "plotId",
+				"type": "string"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "seller",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "priceWei",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint8",
+				"name": "partialPct",
+				"type": "uint8"
+			}
+		],
+		"name": "PlotListed",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "string",
+				"name": "plotId",
+				"type": "string"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "size",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "block_",
+				"type": "string"
+			}
+		],
+		"name": "PlotRegistered",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "string",
+				"name": "plotId",
+				"type": "string"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "priceWei",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint8",
+				"name": "partialPct",
+				"type": "uint8"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "timestamp",
+				"type": "uint256"
+			}
+		],
+		"name": "PlotSold",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "string",
+				"name": "originalPlotId",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "newPlotId",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint16",
+				"name": "soldMarla",
+				"type": "uint16"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint16",
+				"name": "retainedMarla",
+				"type": "uint16"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "buyer",
+				"type": "address"
+			}
+		],
+		"name": "PlotSplit",
+		"type": "event"
+	},
+	{
+		"inputs": [],
+		"name": "admin",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "allPlotIds",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "plotId",
+				"type": "string"
+			},
+			{
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			},
+			{
+				"internalType": "string",
+				"name": "reason",
+				"type": "string"
+			}
+		],
+		"name": "authorityTransfer",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "plotId",
+				"type": "string"
+			}
+		],
+		"name": "buyPlot",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "plotId",
+				"type": "string"
+			}
+		],
+		"name": "delistPlot",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "feeBps",
+		"outputs": [
+			{
+				"internalType": "uint16",
+				"name": "",
+				"type": "uint16"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getAllPlotIds",
+		"outputs": [
+			{
+				"internalType": "string[]",
+				"name": "",
+				"type": "string[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "plotId",
+				"type": "string"
+			}
+		],
+		"name": "getHistory",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "address",
+						"name": "from",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "to",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "priceWei",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "timestamp",
+						"type": "uint256"
+					},
+					{
+						"internalType": "string",
+						"name": "transferType",
+						"type": "string"
+					}
+				],
+				"internalType": "struct LandLedger.TransferRecord[]",
+				"name": "",
+				"type": "tuple[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "plotId",
+				"type": "string"
+			}
+		],
+		"name": "getListing",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "string",
+						"name": "plotId",
+						"type": "string"
+					},
+					{
+						"internalType": "address",
+						"name": "seller",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "priceWei",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint8",
+						"name": "partialPct",
+						"type": "uint8"
+					},
+					{
+						"internalType": "bool",
+						"name": "active",
+						"type": "bool"
+					}
+				],
+				"internalType": "struct LandLedger.Listing",
+				"name": "",
+				"type": "tuple"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			}
+		],
+		"name": "getOwnerPlots",
+		"outputs": [
+			{
+				"internalType": "string[]",
+				"name": "",
+				"type": "string[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "plotId",
+				"type": "string"
+			}
+		],
+		"name": "getPlot",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "string",
+						"name": "plotId",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "block_",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "size",
+						"type": "string"
+					},
+					{
+						"internalType": "uint16",
+						"name": "marla",
+						"type": "uint16"
+					},
+					{
+						"internalType": "string",
+						"name": "plotType",
+						"type": "string"
+					},
+					{
+						"internalType": "address",
+						"name": "owner",
+						"type": "address"
+					},
+					{
+						"internalType": "enum LandLedger.PlotStatus",
+						"name": "status",
+						"type": "uint8"
+					},
+					{
+						"internalType": "uint256",
+						"name": "askingPriceWei",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint8",
+						"name": "partialPct",
+						"type": "uint8"
+					},
+					{
+						"internalType": "string",
+						"name": "notes",
+						"type": "string"
+					},
+					{
+						"internalType": "bool",
+						"name": "exists",
+						"type": "bool"
+					}
+				],
+				"internalType": "struct LandLedger.Plot",
+				"name": "",
+				"type": "tuple"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "plotId",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "priceWei",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint8",
+				"name": "partialPct",
+				"type": "uint8"
+			}
+		],
+		"name": "listForSale",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"name": "listings",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "plotId",
+				"type": "string"
+			},
+			{
+				"internalType": "address",
+				"name": "seller",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "priceWei",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint8",
+				"name": "partialPct",
+				"type": "uint8"
+			},
+			{
+				"internalType": "bool",
+				"name": "active",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "ownerPlots",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "ownershipHistory",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "priceWei",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "timestamp",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "transferType",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "platformFees",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"name": "plots",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "plotId",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "block_",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "size",
+				"type": "string"
+			},
+			{
+				"internalType": "uint16",
+				"name": "marla",
+				"type": "uint16"
+			},
+			{
+				"internalType": "string",
+				"name": "plotType",
+				"type": "string"
+			},
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"internalType": "enum LandLedger.PlotStatus",
+				"name": "status",
+				"type": "uint8"
+			},
+			{
+				"internalType": "uint256",
+				"name": "askingPriceWei",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint8",
+				"name": "partialPct",
+				"type": "uint8"
+			},
+			{
+				"internalType": "string",
+				"name": "notes",
+				"type": "string"
+			},
+			{
+				"internalType": "bool",
+				"name": "exists",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "plotId",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "block_",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "size",
+				"type": "string"
+			},
+			{
+				"internalType": "uint16",
+				"name": "marla",
+				"type": "uint16"
+			},
+			{
+				"internalType": "string",
+				"name": "plotType",
+				"type": "string"
+			},
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"internalType": "string",
+				"name": "notes",
+				"type": "string"
+			}
+		],
+		"name": "registerPlot",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint16",
+				"name": "_feeBps",
+				"type": "uint16"
+			}
+		],
+		"name": "setFeeBps",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "totalPlots",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "newAdmin",
+				"type": "address"
+			}
+		],
+		"name": "transferAdmin",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "plotId",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "notes",
+				"type": "string"
+			}
+		],
+		"name": "updateNotes",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "withdrawFees",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	}
+];
+
+const ETH_TO_PKR = 920000; // 1 ETH ≈ ₨ 9.2 Lakh (approx)
+
+// Simulated wallet addresses for demo
+const DEMO_WALLETS = {
+  alice:   '0xAlice1234...5678',
+  bob:     '0xBob9876...4321',
+  carol:   '0xCarol1111...2222',
+  david:   '0xDavid3333...4444',
+  eve:     '0xEve5555...6666',
+  faisal:  '0xFaisal7777...8888',
+  gov:     '0xGovDHA0000...0001',
+};
+
+// Full plot registry — DHA Phase 1
+const PLOTS = [
+  // BLOCK A
+  {id:'A-101',block:'A',size:'10 Marla',marla:10,type:'Residential',owner:'Muhammad Asif Khan',walletAlias:'alice',status:'available',
+   askingEth:0,notes:'Corner plot, road facing',
+   gis:{x:20,y:42,w:70,h:52},
+   priceHistory:[
+     {from:'DHA Authority',to:'Muhammad Asif Khan',price:3200000,eth:3.47,date:'2018-06-12',hash:'0x7f3a9c2b1e4d8f0a',type:'First Allotment'},
+   ]},
+  {id:'A-102',block:'A',size:'10 Marla',marla:10,type:'Residential',owner:'Sara Ahmed',walletAlias:'bob',status:'for-sale',
+   askingEth:0.02,notes:'Near park, excellent location',
+   gis:{x:20,y:100,w:70,h:52},
+   priceHistory:[
+     {from:'DHA Authority',to:'Khalid Mahmood',price:3000000,eth:3.26,date:'2017-03-20',hash:'0x1a2b3c4d5e6f7a8b',type:'First Allotment'},
+     {from:'Khalid Mahmood',to:'Sara Ahmed',price:7500000,eth:0.81,date:'2021-09-05',hash:'0x9f8e7d6c5b4a3f2e',type:'Sale'},
+   ]},
+  {id:'A-103',block:'A',size:'5 Marla',marla:5,type:'Residential',owner:'Tariq Hussain',walletAlias:'carol',status:'for-sale',
+   askingEth:0.01,notes:'Ready to build, utilities available',
+   gis:{x:20,y:158,w:70,h:28},
+   priceHistory:[
+     {from:'DHA Authority',to:'Tariq Hussain',price:1600000,eth:1.74,date:'2019-11-01',hash:'0x3c4d5e6f7a8b9c0d',type:'First Allotment'},
+   ]},
+  {id:'A-104',block:'A',size:'5 Marla',marla:5,type:'Residential',owner:'Fatima Malik',walletAlias:'david',status:'available',
+   askingEth:0,notes:'',
+   gis:{x:20,y:191,w:70,h:28},
+   priceHistory:[
+     {from:'DHA Authority',to:'Anwar Malik',price:1500000,eth:1.63,date:'2019-11-01',hash:'0x4d5e6f7a8b9c0d1e',type:'First Allotment'},
+     {from:'Anwar Malik',to:'Fatima Malik',price:2800000,eth:0.30,date:'2023-04-14',hash:'0x5e6f7a8b9c0d1e2f',type:'Inheritance Transfer'},
+   ]},
+
+  // BLOCK B
+  {id:'B-201',block:'B',size:'1 Kanal',marla:20,type:'Residential',owner:'Imran Sheikh',walletAlias:'eve',status:'for-sale',
+   askingEth:0.03,notes:'1 Kanal, boundary wall done, prime corner',
+   gis:{x:190,y:42,w:90,h:70},
+   priceHistory:[
+     {from:'DHA Authority',to:'Shahid Sheikh',price:8000000,eth:8.69,date:'2015-08-30',hash:'0x6f7a8b9c0d1e2f3a',type:'First Allotment'},
+     {from:'Shahid Sheikh',to:'Imran Sheikh',price:22000000,eth:2.39,date:'2022-05-18',hash:'0x7a8b9c0d1e2f3a4b',type:'Sale'},
+   ]},
+  {id:'B-202',block:'B',size:'10 Marla',marla:10,type:'Residential',owner:'Usman Raza',walletAlias:'faisal',status:'available',
+   askingEth:0,notes:'',
+   gis:{x:190,y:118,w:90,h:52},
+   priceHistory:[
+     {from:'DHA Authority',to:'Usman Raza',price:3500000,eth:3.80,date:'2018-02-14',hash:'0x8b9c0d1e2f3a4b5c',type:'First Allotment'},
+   ]},
+  {id:'B-203',block:'B',size:'10 Marla',marla:10,type:'Residential',owner:'Hina Baig',walletAlias:'alice',status:'partial',
+   askingEth:0.01,partialPct:50,notes:'Selling 5 Marla from south portion',
+   gis:{x:190,y:175,w:90,h:52},
+   priceHistory:[
+     {from:'DHA Authority',to:'Rafiq Baig',price:3200000,eth:3.47,date:'2019-04-22',hash:'0x9c0d1e2f3a4b5c6d',type:'First Allotment'},
+     {from:'Rafiq Baig',to:'Hina Baig',price:8200000,eth:0.89,date:'2022-11-09',hash:'0x0d1e2f3a4b5c6d7e',type:'Family Transfer'},
+   ]},
+  {id:'B-204',block:'B',size:'5 Marla',marla:5,type:'Residential',owner:'Govt DHA',walletAlias:'gov',status:'available',
+   askingEth:0,notes:'Reserved',
+   gis:{x:190,y:232,w:90,h:30},
+   priceHistory:[
+     {from:'—',to:'Govt DHA',price:0,eth:0,date:'2014-01-01',hash:'0x1e2f3a4b5c6d7e8f',type:'Government Reserve'},
+   ]},
+
+  // BLOCK C
+  {id:'C-301',block:'C',size:'10 Marla',marla:10,type:'Commercial',owner:'Ahmed Brothers Ltd.',walletAlias:'bob',status:'for-sale',
+   askingEth:0.02,notes:'Commercial zoning, high foot traffic road',
+   gis:{x:390,y:42,w:80,h:52},
+   priceHistory:[
+     {from:'DHA Authority',to:'Ahmed Brothers Ltd.',price:5500000,eth:5.97,date:'2016-07-10',hash:'0x2f3a4b5c6d7e8f9a',type:'First Allotment'},
+   ]},
+  {id:'C-302',block:'C',size:'5 Marla',marla:5,type:'Residential',owner:'Zainab Ali',walletAlias:'carol',status:'available',
+   askingEth:0,notes:'',
+   gis:{x:390,y:100,w:80,h:30},
+   priceHistory:[
+     {from:'DHA Authority',to:'Ali Hassan',price:1800000,eth:1.95,date:'2020-01-15',hash:'0x3a4b5c6d7e8f9a0b',type:'First Allotment'},
+     {from:'Ali Hassan',to:'Zainab Ali',price:3200000,eth:0.35,date:'2023-06-20',hash:'0x4b5c6d7e8f9a0b1c',type:'Sale'},
+   ]},
+  {id:'C-303',block:'C',size:'5 Marla',marla:5,type:'Residential',owner:'Junaid Iqbal',walletAlias:'david',status:'for-sale',
+   askingEth:0.01,notes:'Near mosque, peaceful area',
+   gis:{x:390,y:135,w:80,h:30},
+   priceHistory:[
+     {from:'DHA Authority',to:'Junaid Iqbal',price:1700000,eth:1.85,date:'2020-03-08',hash:'0x5c6d7e8f9a0b1c2d',type:'First Allotment'},
+   ]},
+  {id:'C-304',block:'C',size:'2 Kanal',marla:40,type:'Commercial',owner:'Prime Developers',walletAlias:'eve',status:'available',
+   askingEth:0,notes:'Large commercial plot',
+   gis:{x:390,y:170,w:80,h:80},
+   priceHistory:[
+     {from:'DHA Authority',to:'Prime Developers',price:18000000,eth:19.56,date:'2015-05-01',hash:'0x6d7e8f9a0b1c2d3e',type:'First Allotment'},
+   ]},
+
+  // BLOCK D
+  {id:'D-401',block:'D',size:'10 Marla',marla:10,type:'Residential',owner:'Kashif Nawaz',walletAlias:'faisal',status:'available',
+   askingEth:0,notes:'',
+   gis:{x:20,y:180,w:70,h:52},
+   priceHistory:[
+     {from:'DHA Authority',to:'Naeem Nawaz',price:3100000,eth:3.36,date:'2017-09-12',hash:'0x7e8f9a0b1c2d3e4f',type:'First Allotment'},
+     {from:'Naeem Nawaz',to:'Kashif Nawaz',price:9500000,eth:1.03,date:'2023-08-25',hash:'0x8f9a0b1c2d3e4f5a',type:'Sale'},
+   ]},
+  {id:'D-402',block:'D',size:'10 Marla',marla:10,type:'Residential',owner:'Nadia Farooq',walletAlias:'alice',status:'for-sale',
+   askingEth:0.02,notes:'Double road, north facing',
+   gis:{x:20,y:237,w:70,h:52},
+   priceHistory:[
+     {from:'DHA Authority',to:'Farooq Ahmad',price:3300000,eth:3.58,date:'2018-11-30',hash:'0x9a0b1c2d3e4f5a6b',type:'First Allotment'},
+     {from:'Farooq Ahmad',to:'Nadia Farooq',price:10200000,eth:1.11,date:'2024-01-08',hash:'0x0b1c2d3e4f5a6b7c',type:'Sale'},
+   ]},
+  {id:'D-403',block:'D',size:'5 Marla',marla:5,type:'Residential',owner:'Bilal Chaudhry',walletAlias:'bob',status:'available',
+   askingEth:0,notes:'',
+   gis:{x:20,y:295,w:70,h:30},
+   priceHistory:[
+     {from:'DHA Authority',to:'Bilal Chaudhry',price:1750000,eth:1.90,date:'2019-07-14',hash:'0x1c2d3e4f5a6b7c8d',type:'First Allotment'},
+   ]},
+  {id:'D-404',block:'D',size:'5 Marla',marla:5,type:'Residential',owner:'Sadia Qureshi',walletAlias:'carol',status:'for-sale',
+   askingEth:0.01,notes:'Ideal for small family home',
+   gis:{x:20,y:330,w:70,h:30},
+   priceHistory:[
+     {from:'DHA Authority',to:'Sadia Qureshi',price:1650000,eth:1.79,date:'2020-08-01',hash:'0x2d3e4f5a6b7c8d9e',type:'First Allotment'},
+   ]},
+
+  // BLOCK E
+  {id:'E-501',block:'E',size:'1 Kanal',marla:20,type:'Residential',owner:'Dr. Amir Sohail',walletAlias:'david',status:'available',
+   askingEth:0,notes:'Built house on it',
+   gis:{x:190,y:180,w:90,h:70},
+   priceHistory:[
+     {from:'DHA Authority',to:'Dr. Amir Sohail',price:9000000,eth:9.78,date:'2016-04-25',hash:'0x3e4f5a6b7c8d9e0f',type:'First Allotment'},
+   ]},
+  {id:'E-502',block:'E',size:'10 Marla',marla:10,type:'Residential',owner:'Rabia Khalid',walletAlias:'eve',status:'for-sale',
+   askingEth:0.02,notes:'Plot + foundation laid',
+   gis:{x:190,y:255,w:90,h:52},
+   priceHistory:[
+     {from:'DHA Authority',to:'Khalid Pervaiz',price:3400000,eth:3.69,date:'2018-06-18',hash:'0x4f5a6b7c8d9e0f1a',type:'First Allotment'},
+     {from:'Khalid Pervaiz',to:'Rabia Khalid',price:11000000,eth:1.19,date:'2023-10-11',hash:'0x5a6b7c8d9e0f1a2b',type:'Sale'},
+   ]},
+  {id:'E-503',block:'E',size:'5 Marla',marla:5,type:'Residential',owner:'Hamza Ali',walletAlias:'faisal',status:'partial',
+   askingEth:0.01,partialPct:50,notes:'Selling half — east portion',
+   gis:{x:190,y:312,w:90,h:30},
+   priceHistory:[
+     {from:'DHA Authority',to:'Hamza Ali',price:1600000,eth:1.74,date:'2020-12-05',hash:'0x6b7c8d9e0f1a2b3c',type:'First Allotment'},
+   ]},
+  {id:'E-504',block:'E',size:'5 Marla',marla:5,type:'Residential',owner:'Mariam Shabbir',walletAlias:'alice',status:'available',
+   askingEth:0,notes:'',
+   gis:{x:190,y:347,w:90,h:30},
+   priceHistory:[
+     {from:'DHA Authority',to:'Shabbir Ahmad',price:1550000,eth:1.68,date:'2019-09-22',hash:'0x7c8d9e0f1a2b3c4d',type:'First Allotment'},
+     {from:'Shabbir Ahmad',to:'Mariam Shabbir',price:2900000,eth:0.31,date:'2022-03-30',hash:'0x8d9e0f1a2b3c4d5e',type:'Inheritance Transfer'},
+   ]},
+
+  // BLOCK F
+  {id:'F-601',block:'F',size:'1 Kanal',marla:20,type:'Residential',owner:'Hassan Enterprises',walletAlias:'bob',status:'for-sale',
+   askingEth:0.03,notes:'1 Kanal — best block F location, park-facing',
+   gis:{x:390,y:180,w:80,h:70},
+   priceHistory:[
+     {from:'DHA Authority',to:'Hassan Enterprises',price:10500000,eth:11.41,date:'2015-12-01',hash:'0x9e0f1a2b3c4d5e6f',type:'First Allotment'},
+   ]},
+  {id:'F-602',block:'F',size:'10 Marla',marla:10,type:'Residential',owner:'Uzma Tariq',walletAlias:'carol',status:'available',
+   askingEth:0,notes:'',
+   gis:{x:390,y:255,w:80,h:52},
+   priceHistory:[
+     {from:'DHA Authority',to:'Tariq Jameel',price:3600000,eth:3.91,date:'2018-08-08',hash:'0x0f1a2b3c4d5e6f7a',type:'First Allotment'},
+     {from:'Tariq Jameel',to:'Uzma Tariq',price:12000000,eth:1.30,date:'2024-02-20',hash:'0x1a2b3c4d5e6f7a8b',type:'Sale'},
+   ]},
+  {id:'F-603',block:'F',size:'10 Marla',marla:10,type:'Residential',owner:'Salman Javed',walletAlias:'david',status:'for-sale',
+   askingEth:0.02,notes:'South-facing, ideal orientation',
+   gis:{x:390,y:312,w:80,h:52},
+   priceHistory:[
+     {from:'DHA Authority',to:'Javed Akhtar',price:3250000,eth:3.53,date:'2019-02-28',hash:'0x2b3c4d5e6f7a8b9c',type:'First Allotment'},
+     {from:'Javed Akhtar',to:'Salman Javed',price:10800000,eth:1.17,date:'2023-07-15',hash:'0x3c4d5e6f7a8b9c0d',type:'Sale'},
+   ]},
+  {id:'F-604',block:'F',size:'5 Marla',marla:5,type:'Residential',owner:'Amna Zahid',walletAlias:'eve',status:'available',
+   askingEth:0,notes:'',
+   gis:{x:390,y:369,w:80,h:30},
+   priceHistory:[
+     {from:'DHA Authority',to:'Amna Zahid',price:1850000,eth:2.01,date:'2021-05-10',hash:'0x4d5e6f7a8b9c0d1e',type:'First Allotment'},
+   ]},
+];
+
+// Transaction log (simulated blockchain txs)
+let TRANSACTIONS = [
+  {hash:'0x9f8e7d6c5b4a3f2e',plot:'A-102',action:'Transfer',eth:0.02,pkr:7500000,from:'0xKhalid...',to:'0xSara...',date:'2021-09-05',status:'confirmed'},
+  {hash:'0x5a6b7c8d9e0f1a2b',plot:'E-502',action:'Transfer',eth:0.02,pkr:11000000,from:'0xKhalid2...',to:'0xRabia...',date:'2023-10-11',status:'confirmed'},
+  {hash:'0x1a2b3c4d5e6f7a8b',plot:'A-102',action:'Transfer',eth:0.02,pkr:3000000,from:'DHA',to:'0xKhalid...',date:'2017-03-20',status:'confirmed'},
+  {hash:'0x0b1c2d3e4f5a6b7c',plot:'D-402',action:'Transfer',eth:0.02,pkr:10200000,from:'0xFarooq...',to:'0xNadia...',date:'2024-01-08',status:'confirmed'},
+  {hash:'0x4b5c6d7e8f9a0b1c',plot:'C-302',action:'Transfer',eth:0.01,pkr:3200000,from:'0xAli...',to:'0xZainab...',date:'2023-06-20',status:'confirmed'},
+  {hash:'0x8f9a0b1c2d3e4f5a',plot:'D-401',action:'Transfer',eth:0.02,pkr:9500000,from:'0xNaeem...',to:'0xKashif...',date:'2023-08-25',status:'confirmed'},
+  {hash:'0x7c8d9e0f1a2b3c4d',plot:'E-504',action:'Transfer',eth:0.01,pkr:2900000,from:'0xShabbir...',to:'0xMariam...',date:'2022-03-30',status:'confirmed'},
+  {hash:'0x8d9e0f1a2b3c4d5e',plot:'B-203',action:'Transfer',eth:0.02,pkr:8200000,from:'0xRafiq...',to:'0xHina...',date:'2022-11-09',status:'confirmed'},
+  {hash:'0x1a2b3c4d5e6f7a8b',plot:'F-602',action:'Transfer',eth:0.02,pkr:12000000,from:'0xTariq...',to:'0xUzma...',date:'2024-02-20',status:'confirmed'},
+  {hash:'0x3c4d5e6f7a8b9c0d',plot:'F-603',action:'Transfer',eth:0.02,pkr:10800000,from:'0xJaved...',to:'0xSalman...',date:'2023-07-15',status:'confirmed'},
+];
+
+let activityLog = [];
+
+// ═══════════════════════════════════════
+//           STATE
+// ═══════════════════════════════════════
+let connectedWallet = null; // null or wallet alias
+let connectedAddress = null;
+let currentPlot = null;
+let selectedGISPlot = null;
+
+// ═══════════════════════════════════════
+//           WALLET
+// ═══════════════════════════════════════
+async function connectWallet() {
+  // Already connected — do nothing
+  if (connectedAddress) { showToast("Wallet already connected!"); return; }
+
+  // MetaMask / injected wallet present
+  if (window.ethereum) {
+    try {
+      const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+      if (!accounts || accounts.length === 0) { showToast("No accounts found in MetaMask."); return; }
+
+      // Check we're on Sepolia (chainId 11155111 = 0xaa36a7)
+      const chainId = await window.ethereum.request({ method: "eth_chainId" });
+      if (chainId !== "0xaa36a7") {
+        try {
+          await window.ethereum.request({
+            method: "wallet_switchEthereumChain",
+            params: [{ chainId: "0xaa36a7" }]
+          });
+        } catch(switchErr) {
+          showToast("Please switch MetaMask to Sepolia Testnet manually.");
+          return;
+        }
+      }
+
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer   = await provider.getSigner();
+      connectedAddress = accounts[0];
+
+      // Only connect contract if a real address has been pasted
+      if (CONTRACT_ADDRESS && CONTRACT_ADDRESS !== "0xPasteYourAddressHere") {
+        window.contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+      }
+
+      // Map real wallet to demo alias for UI (if address matches DEMO_WALLETS)
+      const lc = connectedAddress.toLowerCase();
+      for (const [alias, addr] of Object.entries(DEMO_WALLETS)) {
+        if (addr.toLowerCase() === lc) { connectedWallet = alias; break; }
+      }
+      // If no demo alias matched, use the real address as the wallet identifier
+      if (!connectedWallet) connectedWallet = connectedAddress;
+
+      document.getElementById('wallet-dot').className = 'wallet-dot on';
+      document.getElementById('wallet-addr').textContent = connectedAddress.slice(0,6)+'...'+connectedAddress.slice(-4);
+      document.getElementById('wallet-net').style.display = 'block';
+      document.getElementById('wallet-btn').className = 'wallet-btn connected';
+      showToast("✅ MetaMask connected: " + connectedAddress.slice(0,6)+'...'+connectedAddress.slice(-4));
+      refreshMyLand();
+      renderGIS();
+    } catch(err) {
+      if (err.code === 4001) {
+        showToast("Connection rejected. Please approve in MetaMask.");
+      } else {
+        showToast("Error: " + (err.message || err));
+      }
+    }
+    return;
+  }
+
+  // No MetaMask — fall back to demo wallet for UI preview
+  showToast("MetaMask not found — using demo wallet for preview.");
+  const aliases = Object.keys(DEMO_WALLETS);
+  const alias = aliases[Math.floor(Math.random() * aliases.length)];
+  connectedWallet = alias;
+  const shortAddr = '0x' + alias.slice(0,4).toUpperCase() + '...' + Math.random().toString(36).slice(2,6).toUpperCase();
+  connectedAddress = shortAddr;
+  document.getElementById('wallet-dot').className = 'wallet-dot on';
+  document.getElementById('wallet-addr').textContent = shortAddr;
+  document.getElementById('wallet-net').style.display = 'block';
+  document.getElementById('wallet-btn').className = 'wallet-btn connected';
+  refreshMyLand();
+  renderGIS();
+}
+
+
+// ═══════════════════════════════════════
+//           PAGE NAVIGATION
+// ═══════════════════════════════════════
+function showPage(id, el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-link,.s-item').forEach(n=>n.classList.remove('active'));
+  const pg = document.getElementById('page-'+id);
+  if(pg) pg.classList.add('active');
+  if(el){ el.classList.add('active'); }
+  if(id==='gis') renderGIS();
+  if(id==='history') renderHistory();
+  if(id==='transactions') renderTxTable();
+  if(id==='market') renderMarket();
+  if(id==='my-land') refreshMyLand();
+  // sync sidebar + nav
+  document.querySelectorAll('.s-item, .nav-link').forEach(n=>{
+    if(n.getAttribute('onclick') && n.getAttribute('onclick').includes("'"+id+"'")){
+      n.classList.add('active');
+    }
+  });
+  window.scrollTo(0,0);
+}
+
+// ═══════════════════════════════════════
+//           RENDER PROPERTY CARDS
+// ═══════════════════════════════════════
+function getStatusClass(p){
+  if(p.status==='for-sale') return 'for-sale';
+  if(p.status==='partial') return 'partial';
+  if(p.status==='sold') return 'sold';
+  return 'available';
+}
+function getThumbEmoji(p){
+  if(p.marla>=40) return '🏢';
+  if(p.marla>=20) return '🏘';
+  if(p.type==='Commercial') return '🏬';
+  if(p.marla<=5) return '🏡';
+  return '🏗';
+}
+function getStatusBadge(p){
+  if(p.status==='for-sale') return '<span class="badge badge-sale">For Sale</span>';
+  if(p.status==='partial') return '<span class="badge badge-partial">Partial Sale</span>';
+  if(p.status==='sold') return '<span class="badge badge-sold">Sold</span>';
+  return '<span class="tag tag-gray">Held</span>';
+}
+function isMyPlot(p){ return (connectedWallet && p.walletAlias === connectedWallet) || false; }
+function getLastPrice(p){
+  if(!p.priceHistory.length) return '—';
+  const l = p.priceHistory[p.priceHistory.length-1];
+  return '₨ ' + l.price.toLocaleString();
+}
+
+function buildCard(p, showBuyBtn=false){
+  const mine = isMyPlot(p);
+  return `<div class="prop-card" onclick="openPropDetail('${p.id}')">
+    <div class="prop-thumb" style="background:${p.block==='A'?'#DBEAFE':p.block==='B'?'#D1FAE5':p.block==='C'?'#FEF3C7':p.block==='D'?'#EDE9FE':p.block==='E'?'#CFFAFE':'#FCE7F3'}">
+      <span>${getThumbEmoji(p)}</span>
+      <div class="prop-badges">
+        ${getStatusBadge(p)}
+        ${mine?'<span class="badge badge-owned">Yours</span>':''}
+        <span class="badge badge-verified">⛓ On-Chain</span>
+      </div>
+    </div>
+    <div class="prop-body">
+      <div class="prop-name">Block ${p.block} — Plot ${p.id}</div>
+      <div class="prop-loc">DHA Phase 1, Rawalpindi · ${p.type}</div>
+      <div class="prop-price">${p.askingEth>0?p.askingEth+' ETH <span style="font-size:12px;color:var(--slate);font-weight:400">≈ ₨'+Math.round(p.askingEth*ETH_TO_PKR).toLocaleString()+'</span>':getLastPrice(p)}</div>
+      <div class="prop-meta">
+        <span class="prop-meta-item">${p.size}</span>
+        <span class="prop-meta-item">${p.type}</span>
+        ${p.status==='partial'?'<span class="prop-meta-item" style="background:var(--amber-l);color:var(--amber)">'+p.partialPct+'% Listed</span>':''}
+      </div>
+    </div>
+    <div class="prop-footer">
+      <span class="parcel-id">#${p.id}</span>
+      <span class="chain-ok">✓ Verified</span>
+    </div>
+  </div>`;
+}
+
+function renderProps(containerID, plots){
+  const c = document.getElementById(containerID);
+  if(!c) return;
+  if(!plots.length){ c.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:48px;color:var(--slate)"><div style="font-size:36px;margin-bottom:12px">🔍</div><div>No properties match your filters</div></div>'; return; }
+  c.innerHTML = plots.map(p=>buildCard(p)).join('');
+  // update count badges
+  const fs = PLOTS.filter(p=>p.status==='for-sale'||p.status==='partial').length;
+  document.getElementById('st-forsale').textContent=fs;
+  document.getElementById('sb-forsale').textContent=fs;
+}
+
+function filterProps(){
+  const q = (document.getElementById('search-box').value||'').toLowerCase();
+  const t = document.getElementById('filter-type').value;
+  const s = document.getElementById('filter-status').value;
+  let filtered = PLOTS.filter(p=>{
+    const matchQ = !q || p.id.toLowerCase().includes(q) || p.block.toLowerCase().includes(q) || p.owner.toLowerCase().includes(q);
+    const matchT = !t || p.size===t;
+    const matchS = !s || p.status===s || (s==='for-sale'&&p.status==='partial');
+    return matchQ && matchT && matchS;
+  });
+  renderProps('prop-grid', filtered);
+}
+function resetFilters(){
+  document.getElementById('search-box').value='';
+  document.getElementById('filter-type').value='';
+  document.getElementById('filter-status').value='';
+  renderProps('prop-grid', PLOTS);
+}
+
+function renderMarket(){
+  const listed = PLOTS.filter(p=>p.status==='for-sale'||p.status==='partial');
+  document.getElementById('market-grid').innerHTML = listed.map(p=>buildCard(p,true)).join('');
+}
+
+function refreshMyLand(){
+  const noWallet = document.getElementById('my-land-no-wallet');
+  const content = document.getElementById('my-land-content');
+  const sub = document.getElementById('my-land-sub');
+  if(!connectedAddress){
+    noWallet.style.display='flex'; content.style.display='none'; return;
+  }
+  noWallet.style.display='none'; content.style.display='block';
+  const mine = PLOTS.filter(p=>p.walletAlias===connectedWallet);
+  document.getElementById('my-land-alert').textContent = `✓ Found ${mine.length} plot(s) registered to your wallet.`;
+  sub.textContent = `Properties linked to your MetaMask · ${mine.length} found`;
+  if(!mine.length){
+    document.getElementById('my-land-empty').style.display='block';
+    document.getElementById('my-prop-grid').innerHTML='';
+  } else {
+    document.getElementById('my-land-empty').style.display='none';
+    renderProps('my-prop-grid', mine);
+  }
+}
+
+// ═══════════════════════════════════════
+//           PROPERTY DETAIL MODAL
+// ═══════════════════════════════════════
+function openPropDetail(id){
+  currentPlot = PLOTS.find(p=>p.id===id);
+  if(!currentPlot) return;
+  const p = currentPlot;
+  const mine = isMyPlot(p);
+  const last = p.priceHistory[p.priceHistory.length-1]||{};
+
+  document.getElementById('prop-modal-body').innerHTML=`
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px">
+      <div>
+        <div style="font-size:10px;font-family:var(--mono);color:var(--slate);margin-bottom:4px">PLOT ID · DHA PHASE 1</div>
+        <div class="modal-title">${p.id} — Block ${p.block}</div>
+        <div style="font-size:13px;color:var(--slate)">DHA Phase 1, Rawalpindi · ${p.type}</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('prop-modal')">×</button>
+    </div>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+      ${getStatusBadge(p)}
+      ${mine?'<span class="badge badge-owned">Your Property</span>':''}
+      <span class="tag tag-blue">⛓ Sepolia Verified</span>
+      ${p.status==='partial'?`<span class="tag tag-amber">${p.partialPct}% For Sale</span>`:''}
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">
+      <div style="padding:12px;background:var(--surface);border-radius:8px">
+        <div style="font-size:10px;color:var(--slate);margin-bottom:3px">Area</div>
+        <div style="font-size:15px;font-weight:700">${p.size}</div>
+        <div style="font-size:10px;color:var(--slate)">${p.marla} Marla</div>
+      </div>
+      <div style="padding:12px;background:var(--surface);border-radius:8px">
+        <div style="font-size:10px;color:var(--slate);margin-bottom:3px">Current Owner</div>
+        <div style="font-size:13px;font-weight:700">${p.owner}</div>
+        ${mine?'<div style="font-size:10px;color:var(--green);font-weight:600">← You</div>':''}
+      </div>
+      <div style="padding:12px;background:var(--surface);border-radius:8px">
+        <div style="font-size:10px;color:var(--slate);margin-bottom:3px">Last Transfer Price</div>
+        <div style="font-size:13px;font-weight:700;color:var(--green)">₨ ${(last.price||0).toLocaleString()}</div>
+        <div style="font-size:10px;color:var(--slate)">${last.date||'—'}</div>
+      </div>
+    </div>
+
+    ${p.askingEth>0?`
+    <div style="background:var(--blue-l);border:1px solid var(--blue-m);border-radius:10px;padding:14px 16px;margin-bottom:16px">
+      <div style="font-size:11px;color:var(--blue);font-weight:700;margin-bottom:4px">${p.status==='partial'?`SELLING ${p.partialPct}% — ${Math.round(p.marla*p.partialPct/100)} Marla`:'ASKING PRICE'}</div>
+      <div style="font-size:24px;font-weight:800;color:var(--blue)">${p.askingEth} ETH</div>
+      <div style="font-size:12px;color:var(--slate)">≈ ₨ ${Math.round(p.askingEth*ETH_TO_PKR).toLocaleString()}</div>
+    </div>`:''}
+
+    ${p.notes?`<div style="font-size:13px;color:var(--slate);margin-bottom:14px;padding:10px 12px;background:var(--surface);border-radius:7px">📌 ${p.notes}</div>`:''}
+
+    <div style="margin-bottom:16px">
+      <div style="font-size:12px;font-weight:700;color:var(--ink);margin-bottom:10px">Ownership History (${p.priceHistory.length} records)</div>
+      <div class="tl">
+        ${p.priceHistory.slice().reverse().map((h,i)=>`
+          <div class="tl-item">
+            <div class="tl-dot ${i===0?'blue':'green'}"></div>
+            <div class="tl-head">${h.to} ${i===0?'<span class="tag tag-blue" style="font-size:9px">Current</span>':''}</div>
+            <div class="tl-sub">${h.type} · From: ${h.from} · ${h.date}</div>
+            ${h.price?`<div class="tl-price">₨ ${h.price.toLocaleString()} · ${h.eth} ETH</div>`:''}
+            <div class="tl-hash">${h.hash}…</div>
+          </div>
+        `).join('')}
+        <div class="tl-item"><div class="tl-dot gray"></div><div class="tl-head" style="color:var(--slate)">Land Origin — DHA Authority</div><div class="tl-sub">Genesis Record</div></div>
+      </div>
+    </div>
+
+    <div style="border-top:1px solid var(--slate4);padding-top:14px;display:flex;gap:10px">
+      ${mine && p.status!=='sold' ? `<button class="btn btn-green" onclick="openSellModal('${p.id}');closeModal('prop-modal')">List for Sale</button>` : ''}
+      ${!mine && (p.status==='for-sale'||p.status==='partial') ? `<button class="btn btn-primary" onclick="openBuyModal('${p.id}');closeModal('prop-modal')">🦊 Buy via MetaMask</button>` : ''}
+      <button class="btn btn-outline" onclick="closeModal('prop-modal')">Close</button>
+      <div style="margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--slate);align-self:center">Parcel: #${p.id}</div>
+    </div>
+  `;
+  document.getElementById('prop-modal').classList.add('open');
+}
+
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+
+// ═══════════════════════════════════════
+//           SELL MODAL
+// ═══════════════════════════════════════
+function openSellModal(plotId){
+  const p = PLOTS.find(x=>x.id===plotId);
+  if(!p) return;
+  if(!connectedAddress){ showToast('Connect MetaMask first'); return; }
+  if(!isMyPlot(p)){ showToast('You do not own this plot'); return; }
+  currentPlot = p;
+  document.getElementById('sell-plotid').value = p.id;
+  document.getElementById('sell-area').value = p.size + ' (' + p.marla + ' Marla)';
+  document.getElementById('sell-modal-sub').textContent = 'Block ' + p.block + ' — ' + p.size + ', DHA Phase 1';
+  document.getElementById('sell-price-eth').value = '';
+  document.getElementById('sell-pkr-hint').textContent = '≈ — PKR';
+  // build portion options based on marla
+  const sel = document.getElementById('sell-portion');
+  sel.innerHTML='<option value="100">Full Plot (100%) — '+p.marla+' Marla</option>';
+  if(p.marla>=8) sel.innerHTML+='<option value="75">75% — '+Math.round(p.marla*.75)+' Marla</option>';
+  if(p.marla>=4) sel.innerHTML+='<option value="50">Half (50%) — '+Math.round(p.marla*.5)+' Marla</option>';
+  if(p.marla>=8) sel.innerHTML+='<option value="25">25% — '+Math.round(p.marla*.25)+' Marla</option>';
+  updateSellSplit();
+  document.getElementById('sell-modal').classList.add('open');
+}
+
+function updateSellSplit(){
+  const pct = parseInt(document.getElementById('sell-portion').value)||100;
+  const kept = 100-pct;
+  document.getElementById('split-kept').style.width=kept+'%';
+  document.getElementById('split-sell').style.width=pct+'%';
+  document.getElementById('split-kept').textContent=kept?`Kept ${kept}%`:'';
+  document.getElementById('split-sell').textContent=`Sell ${pct}%`;
+  const p = currentPlot;
+  if(p){
+    const sellMarla = Math.round(p.marla*pct/100);
+    const keptMarla = p.marla - sellMarla;
+    document.getElementById('split-label').textContent=`Selling: ${sellMarla} Marla · Retaining: ${keptMarla} Marla`;
+  }
+}
+
+function calcPKR(){
+  const eth = parseFloat(document.getElementById('sell-price-eth').value)||0;
+  document.getElementById('sell-pkr-hint').textContent = eth?`≈ ₨ ${Math.round(eth*ETH_TO_PKR).toLocaleString()} PKR`:'≈ — PKR';
+}
+
+function confirmSell(){
+  const eth = parseFloat(document.getElementById('sell-price-eth').value);
+  if(!eth||eth<=0){ showToast('Please enter a valid ETH price'); return; }
+  const pct = parseInt(document.getElementById('sell-portion').value)||100;
+  const p = currentPlot;
+
+  // Simulate MetaMask TX
+  showToast('🦊 MetaMask: Sending listProperty() transaction…');
+  setTimeout(()=>{
+    p.status = pct===100 ? 'for-sale' : 'partial';
+    p.askingEth = eth;
+    p.partialPct = pct;
+    const hash = '0x'+Math.random().toString(16).slice(2,18);
+    const tx = {hash,plot:p.id,action:'List',eth:0.002,pkr:0,from:connectedAddress||'0xYou...',to:'Smart Contract',date:new Date().toISOString().slice(0,10),status:'confirmed'};
+    TRANSACTIONS.unshift(tx);
+    activityLog.unshift({msg:`Plot ${p.id} listed for sale at ${eth} ETH (${pct}% of ${p.size})`,time:new Date().toLocaleTimeString()});
+    closeModal('sell-modal');
+    renderProps('prop-grid',PLOTS);
+    refreshMyLand();
+    renderMarket();
+    showToast(`✅ ${p.id} listed for sale! Tx: ${hash.slice(0,14)}…`);
+  }, 1800);
+}
+
+// ═══════════════════════════════════════
+//           BUY MODAL
+// ═══════════════════════════════════════
+function openBuyModal(plotId){
+  const p = PLOTS.find(x=>x.id===plotId);
+  if(!p) return;
+  if(!connectedAddress){ showToast('Connect MetaMask first to buy'); return; }
+  if(isMyPlot(p)){ showToast('You already own this plot'); return; }
+  currentPlot = p;
+  const sellMarla = p.status==='partial' ? Math.round(p.marla*(p.partialPct||100)/100) : p.marla;
+  document.getElementById('buy-modal-sub').textContent = `Plot ${p.id} · ${p.size} · Block ${p.block}`;
+  document.getElementById('buy-details').innerHTML=`
+    <div style="background:var(--surface);border-radius:10px;padding:16px;margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px"><span style="color:var(--slate)">Property</span><span style="font-weight:600">Block ${p.block} — Plot ${p.id}</span></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px"><span style="color:var(--slate)">You are buying</span><span style="font-weight:600">${sellMarla} Marla${p.status==='partial'?' ('+p.partialPct+'% of '+p.size+')':''}</span></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px"><span style="color:var(--slate)">Seller</span><span style="font-weight:600">${p.owner}</span></div>
+      <div style="border-top:1px solid var(--slate4);padding-top:10px;margin-top:4px;display:flex;justify-content:space-between;align-items:baseline">
+        <span style="font-size:13px;font-weight:700">Total</span>
+        <div style="text-align:right"><div style="font-size:20px;font-weight:800;color:var(--blue)">${p.askingEth} ETH</div><div style="font-size:11px;color:var(--slate)">≈ ₨ ${Math.round(p.askingEth*ETH_TO_PKR).toLocaleString()}</div></div>
+      </div>
+    </div>
+    <div style="font-family:var(--mono);font-size:11px;color:var(--slate);padding:10px;background:var(--surface);border-radius:7px;margin-bottom:4px">
+      To: <span style="color:var(--blue)">0xLandLedger_Escrow_Sepolia…</span><br>
+      Value: <span style="color:var(--ink)">${p.askingEth} ETH + gas</span><br>
+      Network: <span style="color:var(--green)">Sepolia Testnet</span>
+    </div>
+  `;
+  document.getElementById('buy-modal').classList.add('open');
+}
+
+async function confirmBuy(){
+  const p = currentPlot;
+  if(!p) return;
+  if(!connectedAddress){ showToast('Connect MetaMask first'); return; }
+
+  const prevOwner = p.owner;
+  const newOwnerName = connectedAddress.slice(0,6)+'... (You)';
+
+  // ── Real on-chain buy (if contract is wired up) ──
+  if(window.contract && CONTRACT_ADDRESS !== "0xPasteYourAddressHere"){
+    try {
+      showToast('🦊 Check MetaMask — confirm the transaction…');
+      const priceWei = ethers.parseEther(p.askingEth.toString());
+      const tx = await window.contract.buyPlot(p.id, { value: priceWei });
+      showToast('⏳ Transaction sent — waiting for confirmation…');
+      const receipt = await tx.wait();
+      const hash = receipt.hash;
+      // Update local UI state
+      p.priceHistory.push({from:prevOwner,to:newOwnerName,price:Math.round(p.askingEth*ETH_TO_PKR),eth:p.askingEth,date:new Date().toISOString().slice(0,10),hash,type:'Sale'});
+      TRANSACTIONS.unshift({hash,plot:p.id,action:'Purchase',eth:p.askingEth,pkr:Math.round(p.askingEth*ETH_TO_PKR),from:connectedAddress,to:prevOwner,date:new Date().toISOString().slice(0,10),status:'confirmed'});
+      activityLog.unshift({msg:`Plot ${p.id} purchased for ${p.askingEth} ETH`,time:new Date().toLocaleTimeString()});
+      p.owner = newOwnerName;
+      p.walletAlias = connectedWallet;
+      p.status = 'available';
+      p.askingEth = 0;
+      closeModal('buy-modal');
+      renderProps('prop-grid',PLOTS);
+      refreshMyLand();
+      renderMarket();
+      renderGIS();
+      showToast(`🎉 Purchase confirmed on-chain! Tx: ${hash.slice(0,14)}…`);
+    } catch(err){
+      if(err.code === 4001 || err.code === 'ACTION_REJECTED'){
+        showToast('❌ Transaction rejected in MetaMask.');
+      } else {
+        showToast('Error: ' + (err.reason || err.message || 'Transaction failed'));
+      }
+    }
+    return;
+  }
+
+  // ── Demo / UI-only simulation (no contract address set yet) ──
+  showToast('🦊 Demo mode — simulating transaction…');
+  setTimeout(()=>{
+    const hash = '0x'+Math.random().toString(16).slice(2,18);
+    p.priceHistory.push({from:prevOwner,to:newOwnerName,price:Math.round(p.askingEth*ETH_TO_PKR),eth:p.askingEth,date:new Date().toISOString().slice(0,10),hash,type:'Sale'});
+    TRANSACTIONS.unshift({hash,plot:p.id,action:'Purchase',eth:p.askingEth,pkr:Math.round(p.askingEth*ETH_TO_PKR),from:connectedAddress||'0xYou...',to:prevOwner,date:new Date().toISOString().slice(0,10),status:'confirmed'});
+    activityLog.unshift({msg:`Plot ${p.id} sold to ${newOwnerName} for ${p.askingEth} ETH`,time:new Date().toLocaleTimeString()});
+    p.owner = newOwnerName;
+    p.walletAlias = connectedWallet;
+    p.status = 'available';
+    p.askingEth = 0;
+    closeModal('buy-modal');
+    renderProps('prop-grid',PLOTS);
+    refreshMyLand();
+    renderMarket();
+    renderGIS();
+    showToast(`🎉 Purchase complete! Plot ${p.id} is now yours. Tx: ${hash.slice(0,14)}…`);
+  }, 2200);
+}
+
+// ═══════════════════════════════════════
+//           GIS MAP
+// ═══════════════════════════════════════
+function renderGIS(){
+  const container = document.getElementById('gis-plots');
+  if(!container) return;
+  container.innerHTML = PLOTS.map(p=>{
+    const g = p.gis;
+    const mine = isMyPlot(p);
+    let cls = mine ? 'plot mine' : 'plot ' + getStatusClass(p);
+    return `<div class="${cls}" style="left:${g.x}px;top:${g.y}px;width:${g.w}px;height:${g.h}px" onclick="selectGISPlot('${p.id}')">${p.id}<br><span style="font-size:8px;opacity:.8">${p.size}</span></div>`;
+  }).join('');
+}
+
+function selectGISPlot(id){
+  selectedGISPlot = id;
+  const p = PLOTS.find(x=>x.id===id);
+  if(!p) return;
+  const info = document.getElementById('gis-info');
+  info.classList.remove('hidden');
+  document.getElementById('gi-title').textContent = 'Plot ' + p.id + ' — ' + p.size;
+  document.getElementById('gi-owner').textContent = 'Owner: ' + p.owner;
+  document.getElementById('gi-price').textContent = p.askingEth>0?p.askingEth+' ETH ≈ ₨'+Math.round(p.askingEth*ETH_TO_PKR).toLocaleString():'₨ ' + (p.priceHistory.length?p.priceHistory[p.priceHistory.length-1].price.toLocaleString():'—');
+  document.getElementById('gi-tags').innerHTML = getStatusBadge(p) + ' <span class="tag tag-blue">' + p.type + '</span>';
+}
+function openFromGIS(){
+  if(selectedGISPlot) openPropDetail(selectedGISPlot);
+}
+
+// ═══════════════════════════════════════
+//           HISTORY
+// ═══════════════════════════════════════
+function renderHistory(){
+  const tbody = document.getElementById('hist-tbody');
+  const allRecords = [];
+  PLOTS.forEach(p=>{
+    p.priceHistory.forEach(h=>{
+      allRecords.push({plotId:p.id,block:p.block,size:p.size,...h});
+    });
+  });
+  allRecords.sort((a,b)=>b.date.localeCompare(a.date));
+  tbody.innerHTML = allRecords.map(r=>`
+    <tr>
+      <td style="font-weight:700;color:var(--blue)">${r.plotId}</td>
+      <td style="color:var(--slate)">${r.from}</td>
+      <td style="font-weight:600">${r.to}</td>
+      <td><span class="tag tag-gray">${r.size}</span></td>
+      <td style="font-weight:600;color:var(--green)">${r.price?'₨ '+r.price.toLocaleString():'—'}</td>
+      <td style="font-size:11px;color:var(--slate)">${r.date}</td>
+      <td class="hash">${r.hash}…</td>
+      <td><span class="tag ${r.type==='Sale'?'tag-blue':r.type==='First Allotment'?'tag-green':'tag-amber'}">${r.type}</span></td>
+    </tr>
+  `).join('');
+}
+
+function searchHistory(){
+  const q = (document.getElementById('hist-search').value||'').toLowerCase();
+  if(!q){ document.getElementById('hist-result').innerHTML=''; document.getElementById('hist-all').style.display='block'; return; }
+  const p = PLOTS.find(x=>x.id.toLowerCase()===q||x.owner.toLowerCase().includes(q)||x.id.toLowerCase().includes(q));
+  document.getElementById('hist-all').style.display='none';
+  if(!p){ document.getElementById('hist-result').innerHTML='<div class="alert alert-warn">No results found for "'+q+'"</div>'; return; }
+  document.getElementById('hist-result').innerHTML=`
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header"><div class="card-title">Plot ${p.id} — Ownership Timeline</div><span class="tag tag-blue">${p.size} · ${p.type}</span></div>
+      <div class="card-body">
+        <div class="grid-2">
+          <div>
+            <div style="font-size:12px;font-weight:700;color:var(--ink);margin-bottom:10px">Current Info</div>
+            <div style="font-size:13px;margin-bottom:5px"><span style="color:var(--slate)">Owner: </span><strong>${p.owner}</strong></div>
+            <div style="font-size:13px;margin-bottom:5px"><span style="color:var(--slate)">Status: </span>${getStatusBadge(p)}</div>
+            <div style="font-size:13px;margin-bottom:5px"><span style="color:var(--slate)">Block: </span><strong>${p.block}</strong></div>
+            <div style="font-size:13px"><span style="color:var(--slate)">Area: </span><strong>${p.size}</strong></div>
+          </div>
+          <div class="tl">
+            ${p.priceHistory.slice().reverse().map((h,i)=>`
+              <div class="tl-item">
+                <div class="tl-dot ${i===0?'blue':i===1?'green':'amber'}"></div>
+                <div class="tl-head">${h.to}</div>
+                <div class="tl-sub">${h.type} · ${h.date}</div>
+                ${h.price?`<div class="tl-price">₨ ${h.price.toLocaleString()}</div>`:''}
+                <div class="tl-hash">${h.hash}…</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════════
+//           TRANSACTIONS
+// ═══════════════════════════════════════
+function renderTxTable(){
+  document.getElementById('tx-tbody').innerHTML = TRANSACTIONS.map(t=>`
+    <tr>
+      <td class="hash">${t.hash.slice(0,14)}…</td>
+      <td style="font-weight:600">${t.plot}</td>
+      <td><span class="tag ${t.action==='Purchase'?'tag-blue':t.action==='List'?'tag-green':'tag-amber'}">${t.action}</span></td>
+      <td style="font-weight:600">${t.eth} ETH</td>
+      <td style="color:var(--green)">${t.pkr?'₨ '+t.pkr.toLocaleString():'Gas only'}</td>
+      <td class="hash" style="font-size:10px">${t.from}</td>
+      <td class="hash" style="font-size:10px">${t.to}</td>
+      <td style="font-size:11px;color:var(--slate)">${t.date}</td>
+      <td><span class="tag tag-green">✓ ${t.status}</span></td>
+    </tr>
+  `).join('');
+}
+
+// ═══════════════════════════════════════
+//           ADMIN
+// ═══════════════════════════════════════
+function showAdminLogin(){
+  document.getElementById('admin-login-screen').style.display='block';
+}
+function hideAdminLogin(){
+  document.getElementById('admin-login-screen').style.display='none';
+}
+function adminLogin(){
+  const u = document.getElementById('adm-user').value;
+  const p = document.getElementById('adm-pass').value;
+  if(u==='admin'&&p==='admin123'){
+    document.getElementById('admin-login-screen').style.display='none';
+    document.getElementById('main-app').classList.add('hide');
+    document.getElementById('admin-dashboard').classList.add('show');
+    populateAdmin();
+  } else {
+    showToast('Invalid credentials');
+  }
+}
+function adminLogout(){
+  document.getElementById('admin-dashboard').classList.remove('show');
+  document.getElementById('main-app').classList.remove('hide');
+}
+function populateAdmin(){
+  const fs = PLOTS.filter(p=>p.status==='for-sale'||p.status==='partial').length;
+  document.getElementById('adm-forsale').textContent=fs;
+  document.getElementById('adm-txcount').textContent=TRANSACTIONS.length;
+
+  document.getElementById('adm-plots-tbody').innerHTML=PLOTS.map(p=>`
+    <tr>
+      <td style="font-weight:700;color:var(--blue)">${p.id}</td>
+      <td>${p.block}</td>
+      <td>${p.size}</td>
+      <td style="font-family:var(--mono);font-size:11px">${p.owner.length>18?p.owner.slice(0,18)+'…':p.owner}</td>
+      <td>${p.priceHistory.length?'₨ '+p.priceHistory[p.priceHistory.length-1].price.toLocaleString():'—'}</td>
+      <td><span class="tag ${p.status==='for-sale'?'tag-blue':p.status==='partial'?'tag-amber':p.status==='sold'?'tag-red':'tag-green'}">${p.status}</span></td>
+    </tr>
+  `).join('');
+
+  document.getElementById('adm-tx-tbody').innerHTML=TRANSACTIONS.slice(0,10).map(t=>`
+    <tr>
+      <td class="hash">${t.hash.slice(0,12)}…</td>
+      <td style="font-weight:600">${t.plot}</td>
+      <td><span class="tag tag-blue">${t.action}</span></td>
+      <td>${t.eth} ETH</td>
+      <td style="font-size:11px;color:var(--slate)">${t.date}</td>
+    </tr>
+  `).join('');
+
+  const actDiv = document.getElementById('adm-activity');
+  if(activityLog.length===0){
+    actDiv.innerHTML='<div style="color:var(--slate);font-size:13px;padding:8px 0">No new activity in this session. Listing and purchase events will appear here in real-time.</div>';
+  } else {
+    actDiv.innerHTML=activityLog.map(a=>`
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--surface);border-radius:8px">
+        <span style="font-size:11px;font-family:var(--mono);color:var(--slate);flex-shrink:0">${a.time}</span>
+        <span style="font-size:13px;">${a.msg}</span>
+      </div>
+    `).join('');
+  }
+}
+
+// ═══════════════════════════════════════
+//           TOAST
+// ═══════════════════════════════════════
+let toastTimer;
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),3500);
+}
+
+// ═══════════════════════════════════════
+//           INIT
+// ═══════════════════════════════════════
+window.addEventListener('click', e=>{
+  if(e.target.id==='prop-modal') closeModal('prop-modal');
+  if(e.target.id==='sell-modal') closeModal('sell-modal');
+  if(e.target.id==='buy-modal') closeModal('buy-modal');
+});
+
+// Initial render
+renderProps('prop-grid', PLOTS);
+renderMarket();
+renderHistory();
+renderTxTable();
+renderGIS();
+
+// Animate about bars after delay
+setTimeout(()=>{
+  ['ab-sale','ab-held','ab-part'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.style.width=el.dataset.pct+'%';
+  });
+  document.getElementById('ab-sale').style.background='var(--blue)';
+  document.getElementById('ab-held').style.background='var(--green)';
+  document.getElementById('ab-part').style.background='var(--amber)';
+},400);
+
+// Update badge count
+const fs = PLOTS.filter(p=>p.status==='for-sale'||p.status==='partial').length;
+document.getElementById('st-forsale').textContent=fs;
+document.getElementById('sb-forsale').textContent=fs;
+</script>
+</body>
+</html>
